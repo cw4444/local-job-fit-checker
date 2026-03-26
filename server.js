@@ -697,6 +697,36 @@ function buildAlternateRewritePrompt({ cvText, jobText }) {
   ].join("\n");
 }
 
+function buildReviewPrompt({ cvText, jobText }) {
+  return [
+    "You are an honest CV reviewer and job-fit assessor.",
+    "",
+    "Review the CV against the job description and give practical, no-nonsense feedback.",
+    "",
+    "Rules:",
+    "- Do not invent experience or assume missing evidence exists",
+    "- Separate exact matches, adjacent matches, and missing requirements",
+    "- Call out anything that looks like a wishlist requirement rather than a true blocker",
+    "- Be honest about whether the candidate should apply, apply with tweaks, or probably not bother",
+    "- Keep the tone direct, practical, and human",
+    "",
+    "Return:",
+    "1. Overall verdict",
+    "2. Strongest matches",
+    "3. Adjacent matches that could be reframed",
+    "4. Important gaps",
+    "5. Likely wishlist / non-critical requirements",
+    "6. What to move higher or emphasise in the CV",
+    "7. What looks generic, weak, or irrelevant",
+    "",
+    "CV:",
+    cvText.trim(),
+    "",
+    "Job description:",
+    jobText.trim()
+  ].join("\n");
+}
+
 async function extractTextFromFile(file) {
   const ext = path.extname(file.originalname).toLowerCase();
 
@@ -758,11 +788,16 @@ app.post("/api/analyse", upload.single("cvFile"), async (req, res) => {
       cvText: finalCvText,
       jobText
     });
+    const reviewPrompt = buildReviewPrompt({
+      cvText: finalCvText,
+      jobText
+    });
 
     return res.json({
       analysis,
       rewritePrompt,
       alternateRewritePrompt,
+      reviewPrompt,
       coverLetterPrompt,
       extractedCvText: finalCvText,
       extractedCvPreview: finalCvText.slice(0, 1200)

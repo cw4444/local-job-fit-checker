@@ -19,6 +19,7 @@ const cvPreview = document.getElementById("cvPreview");
 const rewriteOutput = document.getElementById("rewriteOutput");
 const rewritePromptPreview = document.getElementById("rewritePromptPreview");
 const alternateRewritePromptPreview = document.getElementById("alternateRewritePromptPreview");
+const reviewPromptPreview = document.getElementById("reviewPromptPreview");
 const relevantExperience = document.getElementById("relevantExperience");
 const lessRelevantExperience = document.getElementById("lessRelevantExperience");
 const keywordStrategy = document.getElementById("keywordStrategy");
@@ -40,11 +41,14 @@ const rewriteBtn = document.getElementById("rewriteBtn");
 const copyCoverLetterPromptBtn = document.getElementById("copyCoverLetterPromptBtn");
 const openCoverLetterChatGptBtn = document.getElementById("openCoverLetterChatGptBtn");
 const coverLetterBtn = document.getElementById("coverLetterBtn");
+const copyReviewPromptBtn = document.getElementById("copyReviewPromptBtn");
+const openReviewChatGptBtn = document.getElementById("openReviewChatGptBtn");
 
 let latestPrompt = "";
 let latestAlternatePrompt = "";
 let latestCvText = "";
 let latestCoverLetterPrompt = "";
+let latestReviewPrompt = "";
 
 function setStatus(message, isError = false) {
   statusText.textContent = message;
@@ -179,6 +183,7 @@ form.addEventListener("submit", async (event) => {
     latestPrompt = data.rewritePrompt;
     latestAlternatePrompt = data.alternateRewritePrompt || "";
     latestCoverLetterPrompt = data.coverLetterPrompt || "";
+    latestReviewPrompt = data.reviewPrompt || "";
     latestCvText = data.extractedCvText || "";
 
     emptyState.classList.add("hidden");
@@ -195,6 +200,7 @@ form.addEventListener("submit", async (event) => {
     rewritePromptPreview.textContent = latestPrompt || "No rewrite prompt available.";
     alternateRewritePromptPreview.textContent = latestAlternatePrompt || "No alternate rewrite prompt available.";
     coverLetterPromptPreview.textContent = latestCoverLetterPrompt || "No cover letter prompt available.";
+    reviewPromptPreview.textContent = latestReviewPrompt || "No CV review prompt available.";
 
     renderTagList(
       matchedSkills,
@@ -350,6 +356,20 @@ copyCoverLetterPromptBtn.addEventListener("click", async () => {
   }
 });
 
+copyReviewPromptBtn.addEventListener("click", async () => {
+  if (!latestReviewPrompt) {
+    setStatus("Run an analysis first so there is a CV review prompt to copy.", true);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(latestReviewPrompt);
+    setStatus("CV review prompt copied. You can paste it straight into ChatGPT.");
+  } catch {
+    setStatus("Copy failed. Your browser may not allow clipboard access here.", true);
+  }
+});
+
 openCoverLetterChatGptBtn.addEventListener("click", () => {
   if (!latestCoverLetterPrompt) {
     setStatus("Run an analysis first so I can prepare the cover letter prompt.", true);
@@ -361,6 +381,24 @@ openCoverLetterChatGptBtn.addEventListener("click", () => {
     .then(() => {
       window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
       setStatus("Cover letter prompt copied and ChatGPT opened. Paste it into the chat box.");
+    })
+    .catch(() => {
+      window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+      setStatus("ChatGPT opened. Clipboard access was blocked, so copy the prompt from the panel.", true);
+    });
+});
+
+openReviewChatGptBtn.addEventListener("click", () => {
+  if (!latestReviewPrompt) {
+    setStatus("Run an analysis first so I can prepare the CV review prompt.", true);
+    return;
+  }
+
+  navigator.clipboard
+    .writeText(latestReviewPrompt)
+    .then(() => {
+      window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+      setStatus("CV review prompt copied and ChatGPT opened. Paste it into the chat box.");
     })
     .catch(() => {
       window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
@@ -415,6 +453,7 @@ clearBtn.addEventListener("click", () => {
   latestAlternatePrompt = "";
   latestCvText = "";
   latestCoverLetterPrompt = "";
+  latestReviewPrompt = "";
   rewriteOutput.textContent = "";
   rewriteOutput.classList.add("hidden");
   coverLetterOutput.textContent = "";
@@ -422,6 +461,7 @@ clearBtn.addEventListener("click", () => {
   rewritePromptPreview.textContent = "";
   alternateRewritePromptPreview.textContent = "";
   coverLetterPromptPreview.textContent = "";
+  reviewPromptPreview.textContent = "";
   results.classList.add("hidden");
   emptyState.classList.remove("hidden");
   setStatus("Run an analysis to see the match score, strengths, gaps, and rewrite options.");
