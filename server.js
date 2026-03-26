@@ -109,6 +109,21 @@ function splitSentences(text = "") {
     .filter(Boolean);
 }
 
+function extractCvHighlights(text = "") {
+  return text
+    .split(/\r?\n+/)
+    .map((line) => line.replace(/^[\s\-*•]+/, "").trim())
+    .filter((line) => line.length > 24);
+}
+
+function tokenise(text = "") {
+  return normaliseText(text)
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => word.replace(/^[^a-z0-9+#.]+|[^a-z0-9+#.]+$/g, ""))
+    .filter((word) => word.length > 2 && !stopWords.has(word));
+}
+
 function extractKeywords(text = "", limit = 18) {
   const words = normaliseText(text)
     .toLowerCase()
@@ -162,6 +177,88 @@ function extractRequirements(jobText = "") {
   return picked.slice(0, 10);
 }
 
+function extractEssentialRequirements(jobText = "") {
+  const sentences = splitSentences(jobText);
+  return sentences
+    .filter((sentence) =>
+      /\b(must|required|essential|need to|non-negotiable|minimum of|proven experience|hands-on experience)\b/i.test(
+        sentence
+      )
+    )
+    .slice(0, 8);
+}
+
+function scoreRequirementAgainstCv(requirement, cvText) {
+  const requirementTokens = [...new Set(tokenise(requirement))];
+  const cvLower = normaliseText(cvText).toLowerCase();
+  const exactSkillHits = extractCatalogSkills(requirement).filter((skill) => cvLower.includes(skill.toLowerCase()));
+  const tokenHits = requirementTokens.filter((token) => cvLower.includes(token));
+  const overlapRatio = requirementTokens.length ? tokenHits.length / requirementTokens.length : 0;
+
+  let strength = "none";
+  if (exactSkillHits.length >= 2 || overlapRatio >= 0.55) {
+    strength = "strong";
+  } else if (exactSkillHits.length >= 1 || overlapRatio >= 0.28) {
+    strength = "partial";
+  }
+
+  return {
+    requirement,
+    strength,
+    matchedTerms: [...new Set([...exactSkillHits, ...tokenHits])].slice(0, 6)
+  };
+}
+
+function analyseCvRelevance(cvText, jobText, matchedSkills, missingSkills) {
+  const lines = extractCvHighlights(cvText);
+  const jobKeywords = new Set(extractKeywords(jobText, 25));
+  const matchedSkillSet = new Set(matchedSkills.map((skill) => skill.toLowerCase()));
+  const missingSkillSet = new Set(missingSkills.map((skill) => skill.toLowerCase()));
+
+  const scored = lines.map((line) => {
+    const lower = line.toLowerCase();
+    const keywordsHit = [...jobKeywords].filter((keyword) => lower.includes(keyword));
+    const matchedHits = [...matchedSkillSet].filter((skill) => lower.includes(skill));
+    const missingHits = [...missingSkillSet].filter((skill) => lower.includes(skill));
+    const hasMetrics = /\b\d+[%+xkmb]?|\b(increased|reduced|delivered|grew|saved|improved|launched|led)\b/i.test(line);
+    const looksGeneric = /\b(hardworking|team player|fast learner|works well under pressure|go-getter|dynamic|motivated|results-driven)\b/i.test(
+      line
+    );
+
+    let score = keywordsHit.length * 2 + matchedHits.length * 3 + (hasMetrics ? 2 : 0);
+    if (looksGeneric) {
+      score -= 3;
+    }
+    if (missingHits.length) {
+      score -= 1;
+    }
+
+    return {
+      line,
+      score,
+      looksGeneric,
+      keywordsHit,
+      matchedHits
+    };
+  });
+
+  const relevantExperience = scored
+    .filter((item) => item.score >= 3)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map((item) => item.line);
+
+  const lessRelevantExperience = scored
+    .filter((item) => item.looksGeneric || item.score <= 0)
+    .slice(0, 4)
+    .map((item) => item.line);
+
+  return {
+    relevantExperience,
+    lessRelevantExperience
+  };
+}
+
 function buildSummary(cvText, jobText, matchedSkills, missingSkills) {
   const jobKeywords = extractKeywords(jobText, 10);
   const cvKeywords = extractKeywords(cvText, 10);
@@ -199,6 +296,13 @@ function scoreMatch(cvText, jobText) {
   const jobSkills = extractCatalogSkills(jobText);
   const matchedSkills = jobSkills.filter((skill) => cvSkills.includes(skill));
   const missingSkills = jobSkills.filter((skill) => !cvSkills.includes(skill));
+  const essentialRequirements = extractEssentialRequirements(jobText);
+  const essentialRequirementScores = essentialRequirements.map((requirement) =>
+    scoreRequirementAgainstCv(requirement, cvText)
+  );
+  const essentialHits = essentialRequirementScores.filter((item) => item.strength === "strong");
+  const essentialPartials = essentialRequirementScores.filter((item) => item.strength === "partial");
+  const essentialMisses = essentialRequirementScores.filter((item) => item.strength === "none");
 
   const jobKeywords = extractKeywords(jobText, 40);
   const cvKeywords = new Set(extractKeywords(cvText, 60));
@@ -207,8 +311,11 @@ function scoreMatch(cvText, jobText) {
   const skillsScore = jobSkills.length ? matchedSkills.length / jobSkills.length : 0.5;
   const keywordScore = jobKeywords.length ? keywordHits.length / jobKeywords.length : 0.5;
   const requirementScore = Math.min(extractRequirements(cvText).length / Math.max(extractRequirements(jobText).length || 1, 1), 1);
+  const essentialScore = essentialRequirements.length
+    ? ((essentialHits.length * 1) + (essentialPartials.length * 0.45)) / essentialRequirements.length
+    : 0.5;
 
-  const rawScore = (skillsScore * 0.5) + (keywordScore * 0.35) + (requirementScore * 0.15);
+  const rawScore = (skillsScore * 0.35) + (keywordScore * 0.25) + (requirementScore * 0.1) + (essentialScore * 0.3);
   const matchPercentage = Math.round(Math.max(0.15, Math.min(rawScore, 0.95)) * 100);
 
   let likelihood = "Low";
@@ -219,17 +326,30 @@ function scoreMatch(cvText, jobText) {
   }
 
   const summary = buildSummary(cvText, jobText, matchedSkills, missingSkills);
+  const cvRelevance = analyseCvRelevance(cvText, jobText, matchedSkills, missingSkills);
+  const bluntAssessment = essentialMisses.length
+    ? `There ${essentialMisses.length === 1 ? "is 1 essential requirement" : `are ${essentialMisses.length} essential requirements`} where the CV shows little or no evidence.`
+    : essentialPartials.length
+      ? `Some essential requirements are only partially evidenced, so this may still need careful tailoring.`
+      : "The CV appears to cover the core essential requirements reasonably well.";
 
   return {
     matchPercentage,
     likelihood,
     matchedSkills,
     missingSkills,
+    essentialRequirements: essentialRequirementScores,
+    essentialHits,
+    essentialPartials,
+    essentialMisses,
     jobSkills,
     topKeywords: keywordHits.slice(0, 12),
     requirements: extractRequirements(jobText),
     overview: summary.overview,
     concerns: summary.concerns,
+    bluntAssessment,
+    relevantExperience: cvRelevance.relevantExperience,
+    lessRelevantExperience: cvRelevance.lessRelevantExperience,
     confidenceNote:
       "This score is heuristic, not predictive. It is best used to decide whether a role is worth tailoring your CV for, not as a guarantee of interview odds."
   };
@@ -243,12 +363,16 @@ function buildRewritePrompt({ cvText, jobText, focusAreas }) {
   return [
     "Rewrite my CV so it is better targeted to this role.",
     "Keep it truthful and do not invent experience.",
-    "Prioritise stronger alignment to the most important requirements, transferable skills, measurable impact, and ATS-friendly wording.",
+    "Prioritise the must-have requirements, transferable skills, measurable impact, and ATS-friendly wording.",
+    "Call out what is likely irrelevant waffle or weak/generic phrasing and suggest tighter replacements.",
+    "Highlight which existing achievements are actually useful for this role and should be foregrounded.",
     "Return:",
     "1. A rewritten professional summary",
     "2. Improved bullet points for the most relevant experience",
-    "3. A short list of keywords/skills I should make sure are present",
-    "4. A short note on anything I should not claim",
+    "3. A short list titled 'Relevant evidence to keep and emphasise'",
+    "4. A short list titled 'Likely waffle / weak points to cut or rewrite'",
+    "5. A short list of keywords/skills I should make sure are present",
+    "6. A short note on anything I should not claim",
     extraFocus,
     "",
     "Job description:",

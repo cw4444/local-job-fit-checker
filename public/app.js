@@ -5,13 +5,17 @@ const results = document.getElementById("results");
 const matchPercentage = document.getElementById("matchPercentage");
 const likelihood = document.getElementById("likelihood");
 const overview = document.getElementById("overview");
+const bluntAssessment = document.getElementById("bluntAssessment");
 const matchedSkills = document.getElementById("matchedSkills");
 const missingSkills = document.getElementById("missingSkills");
+const essentialRequirements = document.getElementById("essentialRequirements");
 const requirements = document.getElementById("requirements");
 const concerns = document.getElementById("concerns");
 const confidenceNote = document.getElementById("confidenceNote");
 const cvPreview = document.getElementById("cvPreview");
 const rewriteOutput = document.getElementById("rewriteOutput");
+const relevantExperience = document.getElementById("relevantExperience");
+const lessRelevantExperience = document.getElementById("lessRelevantExperience");
 
 const cvFileInput = document.getElementById("cvFile");
 const cvTextInput = document.getElementById("cvText");
@@ -66,6 +70,39 @@ function renderList(container, items, emptyMessage) {
   }
 }
 
+function renderEssentialRequirements(items) {
+  essentialRequirements.innerHTML = "";
+
+  if (!items.length) {
+    const fallback = document.createElement("p");
+    fallback.className = "helper-copy";
+    fallback.textContent = "No explicit must-have requirements were confidently detected in the advert.";
+    essentialRequirements.appendChild(fallback);
+    return;
+  }
+
+  for (const item of items) {
+    const card = document.createElement("div");
+    card.className = `requirement-pill requirement-pill--${item.strength}`;
+
+    const title = document.createElement("strong");
+    title.textContent =
+      item.strength === "strong"
+        ? "Strong evidence"
+        : item.strength === "partial"
+          ? "Some evidence"
+          : "Little or no evidence";
+
+    const body = document.createElement("p");
+    const termText = item.matchedTerms.length ? ` Matched terms: ${item.matchedTerms.join(", ")}.` : "";
+    body.textContent = `${item.requirement}${termText}`;
+
+    card.appendChild(title);
+    card.appendChild(body);
+    essentialRequirements.appendChild(card);
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   rewriteOutput.classList.add("hidden");
@@ -101,6 +138,7 @@ form.addEventListener("submit", async (event) => {
     matchPercentage.textContent = `${data.analysis.matchPercentage}%`;
     likelihood.textContent = data.analysis.likelihood;
     overview.textContent = data.analysis.overview;
+    bluntAssessment.textContent = data.analysis.bluntAssessment;
     confidenceNote.textContent = data.analysis.confidenceNote;
     cvPreview.textContent = data.extractedCvPreview || "No CV preview available.";
 
@@ -125,6 +163,17 @@ form.addEventListener("submit", async (event) => {
       concerns,
       data.analysis.concerns,
       "No major concerns stood out from the heuristic scan."
+    );
+    renderEssentialRequirements(data.analysis.essentialRequirements || []);
+    renderList(
+      relevantExperience,
+      data.analysis.relevantExperience,
+      "Nothing strongly role-relevant stood out yet. Tailoring may need a heavier rewrite."
+    );
+    renderList(
+      lessRelevantExperience,
+      data.analysis.lessRelevantExperience,
+      "No obvious filler or weak lines were flagged from the extracted CV text."
     );
 
     setStatus("Analysis ready. Review the score, gaps, and rewrite options.");

@@ -9,8 +9,11 @@ Local browser app for deciding whether a role is worth applying for.
 - Get:
   - match percentage
   - likely strength (`Low`, `Moderate`, `High`)
+  - essential requirement coverage with blunt misses
   - matching skills
   - likely missing skills
+  - useful CV evidence to keep
+  - likely waffle or weaker points to rewrite
   - extracted requirements
   - short context on strengths and concerns
 - Copy a ChatGPT rewrite prompt

@@ -94,6 +94,7 @@ h1 {
 .panel-heading p,
 .helper-copy,
 #overview,
+.blunt-assessment,
 .list,
 .confidence-note,
 .empty-state p {
@@ -222,6 +223,39 @@ button:disabled {
   gap: 10px;
 }
 
+.requirement-checks {
+  display: grid;
+  gap: 12px;
+}
+
+.requirement-pill {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(85, 70, 56, 0.1);
+}
+
+.requirement-pill strong {
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.requirement-pill p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.requirement-pill--strong {
+  background: rgba(31, 111, 97, 0.09);
+}
+
+.requirement-pill--partial {
+  background: rgba(173, 106, 45, 0.12);
+}
+
+.requirement-pill--none {
+  background: rgba(151, 63, 63, 0.1);
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
@@ -239,6 +273,12 @@ button:disabled {
 .tag--gap {
   background: rgba(151, 63, 63, 0.1);
   color: var(--danger);
+}
+
+.blunt-assessment {
+  margin-top: 10px;
+  font-weight: 800;
+  color: var(--text);
 }
 
 .list {
