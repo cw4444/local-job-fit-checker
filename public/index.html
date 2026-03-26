@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Fit Checker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Local role screening</p>
+        <h1>Check whether a job is worth your time before you apply.</h1>
+        <p class="hero-copy">
+          Upload your CV, paste the job advert, and get a fast read on fit, gaps, likely strength, and a tailored rewrite prompt.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="panel form-panel">
+          <div class="panel-heading">
+            <h2>Input</h2>
+            <p>No persistence. Everything stays in this local session unless you choose to use the API.</p>
+          </div>
+
+          <form id="analysis-form">
+            <label class="field">
+              <span>Upload CV</span>
+              <input id="cvFile" name="cvFile" type="file" accept=".pdf,.docx,.txt,.md,.rtf" />
+            </label>
+
+            <label class="field">
+              <span>Or paste CV text</span>
+              <textarea id="cvText" name="cvText" rows="8" placeholder="Paste CV text here if you don't want to upload a file."></textarea>
+            </label>
+
+            <label class="field">
+              <span>Job description</span>
+              <textarea id="jobText" name="jobText" rows="12" placeholder="Paste the job advert or role details here." required></textarea>
+            </label>
+
+            <label class="field">
+              <span>Optional rewrite focus</span>
+              <textarea id="focusAreas" name="focusAreas" rows="4" placeholder="Example: emphasise product analytics, remote collaboration, and stakeholder management."></textarea>
+            </label>
+
+            <div class="actions">
+              <button class="primary" type="submit">Analyse Job Fit</button>
+              <button class="ghost" type="button" id="clearBtn">Clear</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel results-panel">
+          <div class="panel-heading">
+            <h2>Results</h2>
+            <p id="statusText">Run an analysis to see the match score, strengths, gaps, and rewrite options.</p>
+          </div>
+
+          <div id="emptyState" class="empty-state">
+            <p>The score is heuristic, so treat it like a triage tool: useful for deciding whether to tailor and apply, not a promise of outcome.</p>
+          </div>
+
+          <div id="results" class="results hidden">
+            <div class="score-grid">
+              <article class="metric-card metric-card--accent">
+                <span class="metric-label">Match Score</span>
+                <strong id="matchPercentage">0%</strong>
+              </article>
+              <article class="metric-card">
+                <span class="metric-label">Likelihood</span>
+                <strong id="likelihood">Low</strong>
+              </article>
+            </div>
+
+            <article class="result-card">
+              <h3>Overview</h3>
+              <p id="overview"></p>
+            </article>
+
+            <article class="result-card">
+              <h3>Matching skills</h3>
+              <div id="matchedSkills" class="tag-list"></div>
+            </article>
+
+            <article class="result-card">
+              <h3>What looks missing</h3>
+              <div id="missingSkills" class="tag-list"></div>
+            </article>
+
+            <article class="result-card">
+              <h3>Top requirements spotted</h3>
+              <ul id="requirements" class="list"></ul>
+            </article>
+
+            <article class="result-card">
+              <h3>Concerns and context</h3>
+              <ul id="concerns" class="list"></ul>
+              <p id="confidenceNote" class="confidence-note"></p>
+            </article>
+
+            <article class="result-card">
+              <h3>CV rewrite options</h3>
+              <p class="helper-copy">
+                Use ChatGPT for a quick rewrite workflow, or add an API key to generate one directly inside this app.
+              </p>
+              <div class="rewrite-actions">
+                <button class="secondary" type="button" id="copyPromptBtn">Copy ChatGPT Prompt</button>
+                <button class="secondary" type="button" id="openChatGptBtn">Open ChatGPT</button>
+              </div>
+
+              <label class="field compact-field">
+                <span>Optional OpenAI API key override</span>
+                <input id="apiKey" type="password" placeholder="Uses OPENAI_API_KEY from .env if left blank" />
+              </label>
+
+              <button class="primary full-width" type="button" id="rewriteBtn">Generate CV Rewrite</button>
+              <pre id="rewriteOutput" class="rewrite-output hidden"></pre>
+            </article>
+
+            <article class="result-card">
+              <h3>Extracted CV preview</h3>
+              <pre id="cvPreview" class="preview-box"></pre>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
