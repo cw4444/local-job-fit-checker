@@ -1,6 +1,6 @@
 # Job Fit Checker - Stop wasting hours tailoring your CV for jobs you were never getting anyway
 
-Job Fit Checker is a small local app that helps you decide whether a job is worth applying for before you spend ages rewriting your CV.Unlike most tools, this doesn’t just score your CV — it shows you exactly what to change and gives you a ready-to-use rewrite prompt.
+Job Fit Checker is a small local app that helps you decide whether a job is worth applying for before you spend ages rewriting your CV. Unlike most tools, this doesn’t just score your CV — it shows you exactly what to change and gives you a ready-to-use rewrite prompt.
 
 You upload your CV, paste in a job advert, and it gives you:
 
@@ -174,7 +174,17 @@ You can upload:
 
 ## Important notes
 
-- Nothing is stored between sessions.
+- Nothing is stored between sessions. This runs entirely locally — your CV is not uploaded anywhere
 - The score is a heuristic, not a guarantee of success.
 - It is best used as a triage tool to decide whether a role is worth tailoring your CV for.
 - If you do not want to use the API, the ChatGPT prompt option still works well.
+
+## ⚡ Quick Start (if you hate reading)
+
+1. Download or clone the repo
+2. Open the folder
+3. Open a terminal in that folder
+4. Run:
+   npm install
+   npm start
+5. Open http://localhost:3000
