@@ -80,6 +80,12 @@
             </div>
 
             <article class="result-card">
+              <h3>Verdict</h3>
+              <p id="verdictLabel" class="verdict-label"></p>
+              <p id="verdictReason"></p>
+            </article>
+
+            <article class="result-card">
               <h3>Overview</h3>
               <p id="overview"></p>
               <p id="bluntAssessment" class="blunt-assessment"></p>
@@ -98,6 +104,11 @@
             <article class="result-card">
               <h3>Essential requirements check</h3>
               <div id="essentialRequirements" class="requirement-checks"></div>
+            </article>
+
+            <article class="result-card">
+              <h3>Skill breakdown</h3>
+              <div id="skillBreakdown" class="requirement-checks"></div>
             </article>
 
             <article class="result-card">
@@ -122,14 +133,35 @@
             </article>
 
             <article class="result-card">
+              <h3>Keyword strategy</h3>
+              <ul id="keywordStrategy" class="list"></ul>
+            </article>
+
+            <article class="result-card">
+              <h3>Vibe analysis</h3>
+              <ul id="vibeAnalysis" class="list"></ul>
+            </article>
+
+            <article class="result-card">
               <h3>CV rewrite options</h3>
               <p class="helper-copy">
                 Use ChatGPT for a quick rewrite workflow, or add an API key to generate one directly inside this app.
               </p>
               <div class="rewrite-actions">
                 <button class="secondary" type="button" id="copyPromptBtn">Copy ChatGPT Prompt</button>
-                <button class="secondary" type="button" id="openChatGptBtn">Open ChatGPT</button>
+                <button class="secondary" type="button" id="openChatGptBtn">Copy + Open ChatGPT</button>
               </div>
+              <details class="prompt-panel">
+                <summary>Show rewrite prompt</summary>
+                <pre id="rewritePromptPreview" class="preview-box"></pre>
+              </details>
+              <div class="rewrite-actions top-gap">
+                <button class="secondary" type="button" id="copyAltPromptBtn">Copy Editor Prompt</button>
+              </div>
+              <details class="prompt-panel">
+                <summary>Show alternate editor prompt</summary>
+                <pre id="alternateRewritePromptPreview" class="preview-box"></pre>
+              </details>
 
               <label class="field compact-field">
                 <span>Optional OpenAI API key override</span>
@@ -138,6 +170,23 @@
 
               <button class="primary full-width" type="button" id="rewriteBtn">Generate CV Rewrite</button>
               <pre id="rewriteOutput" class="rewrite-output hidden"></pre>
+            </article>
+
+            <article class="result-card">
+              <h3>Cover letter options</h3>
+              <p class="helper-copy">
+                Build a targeted cover letter from the same CV and job description using ChatGPT or the OpenAI API.
+              </p>
+              <div class="rewrite-actions">
+                <button class="secondary" type="button" id="copyCoverLetterPromptBtn">Copy Cover Letter Prompt</button>
+                <button class="secondary" type="button" id="openCoverLetterChatGptBtn">Copy + Open ChatGPT</button>
+              </div>
+              <details class="prompt-panel">
+                <summary>Show cover letter prompt</summary>
+                <pre id="coverLetterPromptPreview" class="preview-box"></pre>
+              </details>
+              <button class="primary full-width" type="button" id="coverLetterBtn">Generate Cover Letter</button>
+              <pre id="coverLetterOutput" class="rewrite-output hidden"></pre>
             </article>
 
             <article class="result-card">

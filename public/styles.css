@@ -95,6 +95,7 @@ h1 {
 .helper-copy,
 #overview,
 .blunt-assessment,
+#verdictReason,
 .list,
 .confidence-note,
 .empty-state p {
@@ -281,6 +282,13 @@ button:disabled {
   color: var(--text);
 }
 
+.verdict-label {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent-strong);
+}
+
 .list {
   margin: 10px 0 0;
   padding-left: 18px;
@@ -301,6 +309,21 @@ button:disabled {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.92rem;
   line-height: 1.7;
+}
+
+.prompt-panel {
+  margin-top: 14px;
+}
+
+.top-gap {
+  margin-top: 14px;
+}
+
+.prompt-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
 }
 
 @media (max-width: 920px) {

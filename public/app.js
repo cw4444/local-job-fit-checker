@@ -4,18 +4,27 @@ const emptyState = document.getElementById("emptyState");
 const results = document.getElementById("results");
 const matchPercentage = document.getElementById("matchPercentage");
 const likelihood = document.getElementById("likelihood");
+const verdictLabel = document.getElementById("verdictLabel");
+const verdictReason = document.getElementById("verdictReason");
 const overview = document.getElementById("overview");
 const bluntAssessment = document.getElementById("bluntAssessment");
 const matchedSkills = document.getElementById("matchedSkills");
 const missingSkills = document.getElementById("missingSkills");
 const essentialRequirements = document.getElementById("essentialRequirements");
+const skillBreakdown = document.getElementById("skillBreakdown");
 const requirements = document.getElementById("requirements");
 const concerns = document.getElementById("concerns");
 const confidenceNote = document.getElementById("confidenceNote");
 const cvPreview = document.getElementById("cvPreview");
 const rewriteOutput = document.getElementById("rewriteOutput");
+const rewritePromptPreview = document.getElementById("rewritePromptPreview");
+const alternateRewritePromptPreview = document.getElementById("alternateRewritePromptPreview");
 const relevantExperience = document.getElementById("relevantExperience");
 const lessRelevantExperience = document.getElementById("lessRelevantExperience");
+const keywordStrategy = document.getElementById("keywordStrategy");
+const vibeAnalysis = document.getElementById("vibeAnalysis");
+const coverLetterPromptPreview = document.getElementById("coverLetterPromptPreview");
+const coverLetterOutput = document.getElementById("coverLetterOutput");
 
 const cvFileInput = document.getElementById("cvFile");
 const cvTextInput = document.getElementById("cvText");
@@ -25,11 +34,17 @@ const apiKeyInput = document.getElementById("apiKey");
 
 const clearBtn = document.getElementById("clearBtn");
 const copyPromptBtn = document.getElementById("copyPromptBtn");
+const copyAltPromptBtn = document.getElementById("copyAltPromptBtn");
 const openChatGptBtn = document.getElementById("openChatGptBtn");
 const rewriteBtn = document.getElementById("rewriteBtn");
+const copyCoverLetterPromptBtn = document.getElementById("copyCoverLetterPromptBtn");
+const openCoverLetterChatGptBtn = document.getElementById("openCoverLetterChatGptBtn");
+const coverLetterBtn = document.getElementById("coverLetterBtn");
 
 let latestPrompt = "";
+let latestAlternatePrompt = "";
 let latestCvText = "";
+let latestCoverLetterPrompt = "";
 
 function setStatus(message, isError = false) {
   statusText.textContent = message;
@@ -103,10 +118,42 @@ function renderEssentialRequirements(items) {
   }
 }
 
+function renderSkillBreakdown(items) {
+  skillBreakdown.innerHTML = "";
+
+  if (!items.length) {
+    const fallback = document.createElement("p");
+    fallback.className = "helper-copy";
+    fallback.textContent = "No structured skill breakdown was generated from the advert.";
+    skillBreakdown.appendChild(fallback);
+    return;
+  }
+
+  for (const item of items) {
+    const card = document.createElement("div");
+    const variant =
+      item.status === "exact" ? "strong" : item.status === "adjacent" ? "partial" : "none";
+    card.className = `requirement-pill requirement-pill--${variant}`;
+
+    const title = document.createElement("strong");
+    const criticality = item.likelyNonCritical ? "Likely wishlist" : item.type === "preferred" ? "Preferred" : "Required";
+    title.textContent = `${item.skill} -> ${item.status} match (${criticality})`;
+
+    const body = document.createElement("p");
+    body.textContent = item.explanation;
+
+    card.appendChild(title);
+    card.appendChild(body);
+    skillBreakdown.appendChild(card);
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   rewriteOutput.classList.add("hidden");
   rewriteOutput.textContent = "";
+  coverLetterOutput.classList.add("hidden");
+  coverLetterOutput.textContent = "";
   setStatus("Analysing the role against your CV...");
 
   const formData = new FormData();
@@ -130,6 +177,8 @@ form.addEventListener("submit", async (event) => {
     }
 
     latestPrompt = data.rewritePrompt;
+    latestAlternatePrompt = data.alternateRewritePrompt || "";
+    latestCoverLetterPrompt = data.coverLetterPrompt || "";
     latestCvText = data.extractedCvText || "";
 
     emptyState.classList.add("hidden");
@@ -137,10 +186,15 @@ form.addEventListener("submit", async (event) => {
 
     matchPercentage.textContent = `${data.analysis.matchPercentage}%`;
     likelihood.textContent = data.analysis.likelihood;
+    verdictLabel.textContent = data.analysis.verdict?.label || "";
+    verdictReason.textContent = data.analysis.verdict?.reason || "";
     overview.textContent = data.analysis.overview;
     bluntAssessment.textContent = data.analysis.bluntAssessment;
     confidenceNote.textContent = data.analysis.confidenceNote;
     cvPreview.textContent = data.extractedCvPreview || "No CV preview available.";
+    rewritePromptPreview.textContent = latestPrompt || "No rewrite prompt available.";
+    alternateRewritePromptPreview.textContent = latestAlternatePrompt || "No alternate rewrite prompt available.";
+    coverLetterPromptPreview.textContent = latestCoverLetterPrompt || "No cover letter prompt available.";
 
     renderTagList(
       matchedSkills,
@@ -165,6 +219,7 @@ form.addEventListener("submit", async (event) => {
       "No major concerns stood out from the heuristic scan."
     );
     renderEssentialRequirements(data.analysis.essentialRequirements || []);
+    renderSkillBreakdown(data.analysis.skillBreakdown || []);
     renderList(
       relevantExperience,
       data.analysis.relevantExperience,
@@ -174,6 +229,16 @@ form.addEventListener("submit", async (event) => {
       lessRelevantExperience,
       data.analysis.lessRelevantExperience,
       "No obvious filler or weak lines were flagged from the extracted CV text."
+    );
+    renderList(
+      keywordStrategy,
+      (data.analysis.keywordStrategy || []).map((item) => `${item.keyword}: ${item.usageTip}`),
+      "No keyword strategy was generated."
+    );
+    renderList(
+      vibeAnalysis,
+      data.analysis.vibeAnalysis?.notes || [],
+      "No vibe analysis notes were generated."
     );
 
     setStatus("Analysis ready. Review the score, gaps, and rewrite options.");
@@ -198,14 +263,36 @@ copyPromptBtn.addEventListener("click", async () => {
   }
 });
 
+copyAltPromptBtn.addEventListener("click", async () => {
+  if (!latestAlternatePrompt) {
+    setStatus("Run an analysis first so there is an editor prompt to copy.", true);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(latestAlternatePrompt);
+    setStatus("Alternate editor prompt copied. You can paste it straight into ChatGPT.");
+  } catch {
+    setStatus("Copy failed. Your browser may not allow clipboard access here.", true);
+  }
+});
+
 openChatGptBtn.addEventListener("click", () => {
   if (!latestPrompt) {
     setStatus("Run an analysis first so I can prepare the rewrite prompt.", true);
     return;
   }
 
-  window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
-  setStatus("ChatGPT opened in a new tab. Paste the copied prompt there.");
+  navigator.clipboard
+    .writeText(latestPrompt)
+    .then(() => {
+      window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+      setStatus("Rewrite prompt copied and ChatGPT opened. Paste it into the chat box.");
+    })
+    .catch(() => {
+      window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+      setStatus("ChatGPT opened. Clipboard access was blocked, so copy the prompt from the panel.", true);
+    });
 });
 
 rewriteBtn.addEventListener("click", async () => {
@@ -249,12 +336,92 @@ rewriteBtn.addEventListener("click", async () => {
   }
 });
 
+copyCoverLetterPromptBtn.addEventListener("click", async () => {
+  if (!latestCoverLetterPrompt) {
+    setStatus("Run an analysis first so there is a cover letter prompt to copy.", true);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(latestCoverLetterPrompt);
+    setStatus("Cover letter prompt copied. You can paste it straight into ChatGPT.");
+  } catch {
+    setStatus("Copy failed. Your browser may not allow clipboard access here.", true);
+  }
+});
+
+openCoverLetterChatGptBtn.addEventListener("click", () => {
+  if (!latestCoverLetterPrompt) {
+    setStatus("Run an analysis first so I can prepare the cover letter prompt.", true);
+    return;
+  }
+
+  navigator.clipboard
+    .writeText(latestCoverLetterPrompt)
+    .then(() => {
+      window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+      setStatus("Cover letter prompt copied and ChatGPT opened. Paste it into the chat box.");
+    })
+    .catch(() => {
+      window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+      setStatus("ChatGPT opened. Clipboard access was blocked, so copy the prompt from the panel.", true);
+    });
+});
+
+coverLetterBtn.addEventListener("click", async () => {
+  const cvSource = cvTextInput.value.trim() || latestCvText.trim();
+  const jobSource = jobTextInput.value.trim();
+
+  if (!cvSource || !jobSource) {
+    setStatus("Add a CV and a job description before requesting a cover letter.", true);
+    return;
+  }
+
+  coverLetterBtn.disabled = true;
+  setStatus("Generating tailored cover letter...");
+
+  try {
+    const response = await fetch("/api/cover-letter", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        cvText: cvSource,
+        jobText: jobSource,
+        apiKey: apiKeyInput.value.trim(),
+        focusAreas: focusAreasInput.value.trim()
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Cover letter generation failed.");
+    }
+
+    coverLetterOutput.textContent = data.coverLetter;
+    coverLetterOutput.classList.remove("hidden");
+    setStatus("Cover letter generated.");
+  } catch (error) {
+    setStatus(error.message || "Something went wrong during cover letter generation.", true);
+  } finally {
+    coverLetterBtn.disabled = false;
+  }
+});
+
 clearBtn.addEventListener("click", () => {
   form.reset();
   latestPrompt = "";
+  latestAlternatePrompt = "";
   latestCvText = "";
+  latestCoverLetterPrompt = "";
   rewriteOutput.textContent = "";
   rewriteOutput.classList.add("hidden");
+  coverLetterOutput.textContent = "";
+  coverLetterOutput.classList.add("hidden");
+  rewritePromptPreview.textContent = "";
+  alternateRewritePromptPreview.textContent = "";
+  coverLetterPromptPreview.textContent = "";
   results.classList.add("hidden");
   emptyState.classList.remove("hidden");
   setStatus("Run an analysis to see the match score, strengths, gaps, and rewrite options.");
