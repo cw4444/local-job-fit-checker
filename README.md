@@ -1,10 +1,10 @@
 # Job Fit Checker - Stop wasting hours tailoring your CV for jobs you were never getting anyway
 
-Job Fit Checker is a small local app that helps you decide whether a job is worth applying for before you spend ages rewriting your CV.
+Job Fit Checker is a small local app that helps you decide whether a job is worth applying for before you spend ages rewriting your CV.Unlike most tools, this doesn’t just score your CV — it shows you exactly what to change and gives you a ready-to-use rewrite prompt.
 
 You upload your CV, paste in a job advert, and it gives you:
 
-- a match score
+- a fit estimate
 - a rough likelihood rating
 - key matching skills
 - missing skills
