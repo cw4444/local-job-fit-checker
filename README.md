@@ -14,6 +14,16 @@ You upload your CV, paste in a job advert, and it gives you:
 - a one-click ChatGPT rewrite prompt
 - an optional in-app AI rewrite if you add your own OpenAI API key
 
+## ⚡ Quick Start (if you hate reading)
+
+1. Download or clone the repo
+2. Open the folder
+3. Open a terminal in that folder
+4. Run:
+   npm install
+   npm start
+5. Open http://localhost:3000
+
 ## Before you start
 
 You will need:
@@ -179,12 +189,6 @@ You can upload:
 - It is best used as a triage tool to decide whether a role is worth tailoring your CV for.
 - If you do not want to use the API, the ChatGPT prompt option still works well.
 
-## ⚡ Quick Start (if you hate reading)
 
-1. Download or clone the repo
-2. Open the folder
-3. Open a terminal in that folder
-4. Run:
-   npm install
-   npm start
-5. Open http://localhost:3000
+## License
+This software is currently not licensed for commercial use. If you’d like to use this in a business setting or install it professionally, please contact me at cw4444@gmail.com
